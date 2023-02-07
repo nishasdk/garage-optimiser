@@ -1,8 +1,9 @@
-# Defining demand for multi-story parking garage
-#
-# N Saduagkan, Feb 2023
-# @nishasdk
-#
+'''
+Defining demand for multi-story parking garage
+
+N Saduagkan, Feb 2023
+@nishasdk
+'''
 
 import math
 import numpy as np
@@ -47,6 +48,15 @@ volatility = 0.1
 
 
 def cost_initial(floor_initial: int) -> float:
+    """ initial cost of the garage @ time = 0
+    cost remains at this value for the rigid design, use exp_cost for flexible design
+
+    Args:
+        floor_initial (int): floors @ time 0
+
+    Returns:
+        float: cost of infrastructure
+    """
     return cost_construction * space_initial * ((((1 + growth_factor) ** (floor_initial - 1) - (1 + growth_factor)) / growth_factor)) + (2 * space_initial * cost_construction) if floor_initial > 2 else floor_initial * space_initial * cost_construction
 
 
