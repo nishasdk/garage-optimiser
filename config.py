@@ -10,7 +10,7 @@ import numpy as np
 
 # Parameters
 time_lifespan = 20  # years
-time_arr = np.array(range(time_lifespan + 1))  # time array
+time_arr = np.arange(time_lifespan + 1)  # time array
 
 years = list(map(str, range(time_lifespan)))  # Array of strings for np header
 cost_construction = 16000  # Construction cost per parking space

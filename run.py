@@ -8,8 +8,23 @@
 
 import numpy as np
 import config
+import demand
+import plotting
 
-seed_number = 5
+t = config.time_arr # time array
+sims = 10 # number of simulations
+
+'''__________________select seed number__________________'''
+
+seed_number = 69 # means script always selects the same N scenarios. N is defined by sims
+
+'''______________________________________________________'''
+
+scenarios = np.random.choice(100,size=sims,replace=False)
+
+#plot first demands
+plotting.demand_plotter(scenarios[1:8])
+
 
 
 ''' TODO: set up demand -> deterministic AND stochastic'''

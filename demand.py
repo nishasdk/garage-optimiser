@@ -40,7 +40,7 @@ def demand_stochastic(time_arr: np.array, seed_number: int) -> np.array:
         np.array: stochastic demand
     """
     # set constant seed for simulations to for standardized comparison
-    np.random.seed(seed_number)
+    np.random.seed(seed_number) #demand scenario with this seed will always be the same
     rD0 = round(
         (1 - config.off_D0) * config.demand_1 +
         np.random.rand() * 2 * config.off_D0 * config.demand_1)  # Realised demand in year 0
