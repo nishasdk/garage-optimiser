@@ -5,39 +5,48 @@
 # Copyright (c) 2023 N Saduagkan
 #
 
-
 import numpy as np
 import config
-import demand
+import objective_funcs
 import plotting
+from numpy_financial import npv
 
-t = config.time_arr # time array
-sims = 10 # number of simulations
 
-'''__________________select seed number__________________'''
 
-seed_number = 69 # means script always selects the same N scenarios. N is defined by sims
+'''______________select simulation variables__________________'''
 
-'''______________________________________________________'''
+seed_no = 69 # means script always selects the same N scenarios. N is defined by sims
+np.random.seed(seed_no)
+sims = 2000 # number of simulations
 
-scenarios = np.random.choice(100,size=sims,replace=False)
+'''___________________________________________________________'''
+
+
+''' NPV function for initial design vector - rigid and flex'''
+npv_det = objective_funcs.net_present_value(floor_initial=5,demand_det=True)
+
+''' plot the deterministic and stochastic demands'''
+
+scenarios = np.random.choice(sims,size=sims,replace=False) 
 
 #plot first demands
-plotting.demand_plotter(scenarios[1:8])
+# plotting.demand_plotter(scenarios[1:8])
 
+''' ENPV for a certain number of scenarios'''
+cashflow_stoc = np.zeros(config.time_lifespan+1)
+npv_stoc = np.zeros(sims)
+for instance in range(sims):
+    cashflow_stoc = objective_funcs.cashflow_array(floor_initial=5,demand_det=False,seed_number=scenarios[instance])
+    npv_stoc[instance] = npv(config.rate_discount,cashflow_stoc)
 
+enpv_stoc = np.mean(npv_stoc)
+from millify import millify
+print('ENPV £' + str(millify(enpv_stoc,precision=2)))
 
-''' TODO: set up demand -> deterministic AND stochastic'''
-
-''' TODO: ask for design variable input'''
-
-''' TODO: define parameters * create a class?'''
-
-''' TODO: create NPV function for initial design vector - rigid and flex'''
-
-''' TODO: plot the deterministic and stochastic demands'''
+plotting.cdf_plotter(npv_stoc/1e6)
 
 ''' TODO: implement decision rules'''
+
 
 ''' TODO: optimise the rigid & flex design vectors under deterministic demand'''
 ''' TODO: optimise the rigid & flex design vectors under stochastic demand'''
@@ -55,58 +64,3 @@ plotting.demand_plotter(scenarios[1:8])
 
 
 ''' TODO: iterative history? sensitivity analysis? multiobjective? '''
-
-# def capacity_update(capacity: np.array, year_threshold: int = None, y1_4expand: bool = None, y9_12expand: bool = None, y17_20expand: bool = None, floor_expansion: int = None, floor_initial: int = None) -> np.array:
-
-#     if y9_12expand is None:
-#         y9_12expand = {True}
-#     if y17_20expand is None:
-#         y17_20expand = [False]
-#     if floor_expansion is None:
-#         floor_expansion = {1}
-#     if floor_initial is None:
-#         floor_initial = {2}
-#     if year_threshold is None:
-#         year_threshold = {1}
-#     if y1_4expand is None:
-#         y1_4expand = {False}
-#     demand = demand_deterministic(time_arr)
-
-#     for t in range(1,time_lifespan-1):
-#         #WAIT FOR 1 YEAR BEFORE EXPANDING
-#         if year_threshold == 1:
-#             if min(capacity[t],demand[t]) == capacity[t-1] and capacity[t] + floor_expansion * space_per_floor <= floor_max * space_per_floor:
-
-#                 if (y1_4expand and t < 5) or (y9_12expand and t>8 and t<13) or (y17_20expand and t>16 and t<21):
-#                     print('in the range')
-#                     capacity[t] = capacity[t-1] + floor_expansion * space_per_floor
-#                     cost_expansion = expansion_cost(floor_expansion,capacity[t])
-                
-#                 #NOTE: uncomment if they can expand during years 5-9 and 12-17
-#                 #elif (t>5 and t<9) or (t > 12 and t < 17):
-#                     #print('non-design')
-#                     #capacity[t] = capacity[t-1] + floor_expansion * space_per_floor
-#                     #cost_expansion = expansion_cost(floor_expansion,capacity[t])
-
-#                 else:
-#                     capacity[t] = floor_initial * space_per_floor
-#                     cost_expansion = 0
-                    
-#         #WAIT FOR 2 YEARS BEFORE EXPANDING
-#         if year_threshold == 2:
-#             if min(capacity[t],demand[t]) + min(capacity[t-1],demand[t-1]) == capacity[t-1] and capacity[t] + floor_expansion * space_per_floor <= floor_max * space_per_floor:
-
-#                 if (y1_4expand and t < 5) or (y9_12expand and t>8 and t<13) or (y17_20expand and t>16 and t<21):
-#                     print('in the range')
-#                     capacity[t] = capacity[t-1] + floor_expansion * space_per_floor
-#                     cost_expansion = expansion_cost(floor_expansion,capacity[t])
-                
-#                 #NOTE: uncomment if they can expand during years 5-9 and 12-17
-#                 #elif (t>5 and t<9) or (t > 12 and t < 17):
-#                     #print('non-design')
-#                     #capacity[t] = capacity[t-1] + floor_expansion * space_per_floor
-#                     #cost_expansion = expansion_cost(floor_expansion,capacity[t])
-
-#                 else:
-#                     capacity[t] = floor_initial * space_per_floor
-#                     cost_expansion = 0
