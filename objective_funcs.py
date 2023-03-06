@@ -5,6 +5,7 @@ N Saduagkan, Feb 2023
 @nishasdk
 """
 
+from pandas import array
 import config
 import numpy as np
 from numpy_financial import npv
@@ -137,3 +138,24 @@ def net_present_value(floor_initial: int, demand_det: bool, seed_number = None):
     return net_present_value
 
 
+def expected_npv(sims: int, scenarios: np.array) -> np.array:
+    """Calculates expected NPV for x demand scenarios and n simulations
+
+    Args:
+        sims (int): number of simulations
+        scenarios (np.array): demand scenarios array
+
+    Returns:
+        np.array: the ENPV and the stochastic NPV array for plotting
+    """
+    cashflow_stoc = np.zeros(config.time_lifespan+1)
+    npv_stoc = np.zeros(sims)
+    for instance in range(sims):
+        cashflow_stoc = cashflow_array(floor_initial=5,demand_det=False,seed_number=scenarios[instance])
+        npv_stoc[instance] = npv(config.rate_discount,cashflow_stoc)
+
+    enpv_stoc = np.mean(npv_stoc)
+    from millify import millify
+    print('ENPV £' + str(millify(enpv_stoc,precision=2)))
+    
+    return enpv_stoc, npv_stoc

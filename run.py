@@ -10,6 +10,7 @@ import config
 import objective_funcs
 import plotting
 from numpy_financial import npv
+import matplotlib.pyplot as plt
 
 
 
@@ -30,37 +31,29 @@ npv_det = objective_funcs.net_present_value(floor_initial=5,demand_det=True)
 scenarios = np.random.choice(sims,size=sims,replace=False) 
 
 #plot first demands
-# plotting.demand_plotter(scenarios[1:8])
+plt.style.use(style='fast')
+
+ax1 = plt.figure(plotting.demand_plotter(scenarios[1:8]))
 
 ''' ENPV for a certain number of scenarios'''
-cashflow_stoc = np.zeros(config.time_lifespan+1)
-npv_stoc = np.zeros(sims)
-for instance in range(sims):
-    cashflow_stoc = objective_funcs.cashflow_array(floor_initial=5,demand_det=False,seed_number=scenarios[instance])
-    npv_stoc[instance] = npv(config.rate_discount,cashflow_stoc)
+enpv_stoc, npv_stoc = objective_funcs.expected_npv(sims,scenarios)
 
-enpv_stoc = np.mean(npv_stoc)
-from millify import millify
-print('ENPV £' + str(millify(enpv_stoc,precision=2)))
+ax2 = plt.figure(plotting.histogram_plotter(npv_stoc/1e6))
+ax3 = plt.figure(plotting.cdf_plotter(npv_stoc/1e6,enpv_stoc/1e6))
 
-plotting.cdf_plotter(npv_stoc/1e6)
+plt.show()
 
 ''' TODO: implement decision rules'''
 
 
-''' TODO: optimise the rigid & flex design vectors under deterministic demand'''
-''' TODO: optimise the rigid & flex design vectors under stochastic demand'''
+''' TODO: optimise the rigid design under deterministic and stochastic demand'''
+''' TODO: optimise the flex design vectors under deterministic and stochastic demand'''
 # at this point it proves that optimal values will not be the same under a stochastic demand
 
-''' TODO: montecarlo simulation for n cases - generate n different demand scenarios'''
-# show uncertainty across scenarios
 
-''' TODO: set up ENPV function - rigid AND flex'''
 
 ''' TODO: optimise against ENPV to find optimal design variable'''
 # prove that flexibility can 
-
-''' TODO: plot the results, histogram, cdf distribution'''
 
 
 ''' TODO: iterative history? sensitivity analysis? multiobjective? '''
