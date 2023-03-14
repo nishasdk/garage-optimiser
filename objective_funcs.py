@@ -9,6 +9,7 @@ from pandas import array
 import config
 import numpy as np
 from numpy_financial import npv
+from decision_rules import capacity_update
 import typing
 
 def demand_deterministic(time_arr: np.array) -> np.array:
@@ -80,29 +81,8 @@ def cost_construction_initial(floor_initial: int) -> float:
             (2 * config.space_per_floor * config.cost_construction) if floor_initial > 2 else
             floor_initial * config.space_per_floor * config.cost_construction)
 
-def occupancy(demand: int, capacity: int) -> int:
-    return min(demand, capacity)
 
-
-def expansion_cost(floor_expansion: int, capacity: int) -> float:
-    """calculates the cost of expanding (past 2 floors)
-
-    Args:
-        floor_expansion (int): how many floors to expand by
-        capacity (int): current capacity (when nested in capacity_update, will take a value from capacity array)
-
-    Returns:
-        float: cost to expand the specified amount of floors
-    """
-    return config.cost_construction * config.space_per_floor *(
-        (
-            (
-                (1 + config.growth_factor) ** floor_expansion) / config.growth_factor - 1) * (
-                    (1 + config.growth_factor) ** (capacity/config.space_per_floor -1) 
-                )
-            )
-
-def cashflow_array(floor_initial: int, demand_det: bool, seed_number = None) -> np.array:
+def cashflow_array_rigid(floor_initial: int, demand_det: bool, seed_number = None) -> np.array:
     """Generates an array containing the annual cashflows across project lifespan
 
     Args:
@@ -125,12 +105,30 @@ def cashflow_array(floor_initial: int, demand_det: bool, seed_number = None) -> 
         demand = demand_stochastic(config.time_arr,seed_number)
     for i in range(1, config.time_lifespan):
         cashflow[i] = min(capacity[i], demand[i])*config.price - capacity[i]*config.cost_ops - config.cost_land
-    cashflow[-1] = min(capacity[i], demand[i])*config.price - capacity[i]*config.cost_ops
+    cashflow[-1] = min(capacity[-1], demand[-1])*config.price - capacity[-1]*config.cost_ops
     
     return cashflow
 
+def cashflow_array_flex(floor_initial: int, seed_number = None) -> np.array:
+    
+    # initialise the cashflow array
+    cashflow = np.full((config.time_lifespan+1), -(cost_construction_initial(floor_initial) + config.cost_land))
+    # initialise capacity array
+    capacity = np.full((config.time_lifespan+1),floor_initial * config.space_per_floor, dtype=int)
+    # initialise demand scenarios
+    demand = demand_stochastic(config.time_arr,seed_number)
+    #initialise expansion cost
+    cost_expansion = np.zeros(config.time_lifespan+1)
+    
+    capacity, cost_expansion = capacity_update(capacity,cost_expansion,demand,config.floor_expansion,config.year_threshold,config.capacity_threshold)
+    
+    for t in range(1, config.time_lifespan):
+        cashflow[t] = min(capacity[t], demand[t])*config.price - capacity[t]*config.cost_ops - config.cost_land - cost_expansion[t]
+    cashflow[-1] = min(capacity[-1], demand[-1])*config.price - capacity[-1]*config.cost_ops
+    return cashflow
+
 def net_present_value(floor_initial: int, demand_det: bool, seed_number = None):
-    npv_garage = npv(config.rate_discount,cashflow_array(floor_initial,demand_det,seed_number))
+    npv_garage = npv(config.rate_discount,cashflow_array_rigid(floor_initial,demand_det,seed_number))
     
     from millify import millify
     print('NPV £' + str(millify(npv_garage,precision=2)))
@@ -138,7 +136,7 @@ def net_present_value(floor_initial: int, demand_det: bool, seed_number = None):
     return net_present_value
 
 
-def expected_npv(sims: int, scenarios: np.array) -> np.array:
+def expected_npv(floor_initial: int, sims: int, scenarios: np.array, flex: bool) -> np.array:
     """Calculates expected NPV for x demand scenarios and n simulations
 
     Args:
@@ -151,11 +149,14 @@ def expected_npv(sims: int, scenarios: np.array) -> np.array:
     cashflow_stoc = np.zeros(config.time_lifespan+1)
     npv_stoc = np.zeros(sims)
     for instance in range(sims):
-        cashflow_stoc = cashflow_array(floor_initial=5,demand_det=False,seed_number=scenarios[instance])
+        if flex:
+            cashflow_stoc = cashflow_array_flex(floor_initial,seed_number=scenarios[instance])
+        else:
+            cashflow_stoc = cashflow_array_rigid(floor_initial,demand_det=False,seed_number=scenarios[instance])
         npv_stoc[instance] = npv(config.rate_discount,cashflow_stoc)
 
     enpv_stoc = np.mean(npv_stoc)
     from millify import millify
     print('ENPV £' + str(millify(enpv_stoc,precision=2)))
-    
+
     return enpv_stoc, npv_stoc

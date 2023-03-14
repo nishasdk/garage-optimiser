@@ -70,7 +70,7 @@ def histogram_plotter(npv:np.array):
     )
 
     plt.grid('on', linestyle='--')
-    plt.xlim([-15, 12])
+    plt.xlim([np.amin(npv), np.amax(npv)])
     
     plt.xlabel("NPV ($, Millions)")
     plt.ylabel("Probability (%)")

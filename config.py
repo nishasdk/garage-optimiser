@@ -8,6 +8,17 @@ N Saduagkan, Feb 2023
 
 import numpy as np
 
+
+'''________________select design variables___________________'''
+y1_4expand = False
+y9_12expand = True
+y17_20expand = False
+floor_expansion = 1
+floor_initial = 5
+year_threshold = 2
+capacity_threshold = 1
+'''___________________________________________________________'''
+
 # Parameters
 time_lifespan = 20  # years
 time_arr = np.arange(time_lifespan + 1)  # time array
