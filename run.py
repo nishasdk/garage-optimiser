@@ -64,6 +64,7 @@ if plot:
     #plot first demands
     plt.style.use(style='fast')
     ax1 = plt.figure(plotting.demand_plotter(config.scenarios[1:8]))
+    enpv_stoc, npv_stoc = objective_funcs.expected_npv(config.sims,config.scenarios)
     #rigid stochastic demand histogram
     ax2 = plt.figure(plotting.histogram_plotter(npv_stoc/1e6))
     #rigid stochastic demand cdf
