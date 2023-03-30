@@ -8,6 +8,17 @@ N Saduagkan, Feb 2023
 
 import numpy as np
 
+'''______________select simulation variables__________________'''
+
+seed_no = 123 # means script always selects the same N scenarios. N is defined by sims
+np.random.seed(seed_no)
+sims = 2000 # number of simulations
+
+'''___________________________________________________________'''
+
+''' ENPV for a certain number of scenarios'''
+scenarios = np.random.choice(sims,size=sims,replace=False) 
+
 
 '''________________select design variables___________________'''
 y1_4expand = False
@@ -35,7 +46,7 @@ space_per_floor = 200  # Initial number of parking space per floor
 price = 10000  # Price per parking space
 rate_discount = 0.12  # Discount rate
 floor_min = 2  # Minimum number of floors built
-floor_max = 9  # Maximum number of floors built
+floor_max = 9 + 1  # Maximum number of floors built (+1 is for python to pick 9 floors inclusive upperbound)
 
 # Demand Variables
 demand_1 = 750  # Projected year 1 demand

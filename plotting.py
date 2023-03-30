@@ -44,7 +44,7 @@ def demand_plotter(scenarios: np.array):
     for axis in [ax.xaxis, ax.yaxis]:
         axis.set_major_locator(ticker.MaxNLocator(integer=True))
     plt.grid(which='major', axis='both', linestyle='--')
-    plt.xlim([1, 20])
+    plt.xlim([0, 20])
 
     plt.xlabel("Year")
     plt.ylabel("Demand")
