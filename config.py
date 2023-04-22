@@ -16,18 +16,18 @@ sims = 2000 # number of simulations
 
 '''___________________________________________________________'''
 
-''' ENPV for a certain number of scenarios'''
+''' to find ENPV for a certain number of scenarios'''
 scenarios = np.random.choice(sims,size=sims,replace=False) 
 
 
 '''________________select design variables___________________'''
-y1_4expand = False
-y9_12expand = True
-y17_20expand = False
+floor_initial = 3
+y1_4expand = 0
+y9_12expand = 1
+y17_20expand = 0
 floor_expansion = 1
-floor_initial = 5
-year_threshold = 2
-capacity_threshold = 1
+year_threshold = 1
+capacity_threshold = 0.8
 '''___________________________________________________________'''
 
 # Parameters

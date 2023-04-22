@@ -5,11 +5,9 @@ N Saduagkan, Feb 2023
 @nishasdk
 """
 
-from pandas import array
 import config
 import numpy as np
 from numpy_financial import npv
-from decision_rules import capacity_update
 import typing
 
 def demand_deterministic(time_arr: np.array) -> np.array:
@@ -109,44 +107,16 @@ def cashflow_array_rigid(floor_initial: float, demand_det: bool, seed_number = N
     
     return cashflow
 
-def cashflow_array_flex(floor_initial: float, seed_number = None) -> np.array:
-    
-    # initialise the cashflow array
-    cashflow = np.full((config.time_lifespan+1), -(cost_construction_initial(floor_initial) + config.cost_land), dtype='float64')
-    # initialise capacity array
-    capacity = np.full((config.time_lifespan+1),floor_initial * config.space_per_floor)
-    # initialise demand scenarios
-    demand = demand_stochastic(config.time_arr,seed_number)
-    #initialise expansion cost
-    cost_expansion = np.zeros(config.time_lifespan+1)
-    
-    capacity, cost_expansion = capacity_update(capacity,cost_expansion,demand,config.floor_expansion,config.year_threshold,config.capacity_threshold)
-    
-    for t in range(1, config.time_lifespan):
-        cashflow[t] = min(capacity[t], demand[t])*config.price - capacity[t]*config.cost_ops - config.cost_land - cost_expansion[t]
-    cashflow[-1] = min(capacity[-1], demand[-1])*config.price - capacity[-1]*config.cost_ops
-    return cashflow
-
-def cashflow_array_flex_det(floor_initial: float) -> np.array:
-    
-    # initialise the cashflow array
-    cashflow = np.full((config.time_lifespan+1), -(cost_construction_initial(floor_initial) + config.cost_land), dtype='float64')
-    # initialise capacity array
-    capacity = np.full((config.time_lifespan+1),floor_initial * config.space_per_floor)
-    #initialise expansion cost
-    cost_expansion = np.zeros(config.time_lifespan+1)
-    
-    demand = demand_deterministic(config.time_arr)
-    
-    capacity, cost_expansion = capacity_update(capacity,cost_expansion,demand,config.floor_expansion,config.year_threshold,config.capacity_threshold)
-    
-    for t in range(1, config.time_lifespan):
-        cashflow[t] = min(capacity[t], demand[t])*config.price - capacity[t]*config.cost_ops - config.cost_land - cost_expansion[t]
-    cashflow[-1] = min(capacity[-1], demand[-1])*config.price - capacity[-1]*config.cost_ops
-    return cashflow
 
 def npv_det(floor_initial: float):
+    """_summary_
 
+    Args:
+        floor_initial (float): _description_
+
+    Returns:
+        _type_: _description_
+    """
     npv_garage = npv(config.rate_discount,cashflow_array_rigid(floor_initial,demand_det = True))
     
     from millify import millify
@@ -155,19 +125,27 @@ def npv_det(floor_initial: float):
     return npv_det
 
 def npv_det_opti(floor_initial: float):
+    """_summary_
 
+    Args:
+        floor_initial (float): _description_
+
+    Returns:
+        _type_: _description_
+    """
     return -npv(config.rate_discount,cashflow_array_rigid(floor_initial,demand_det = True))
 
 
-y1_4expand = False
-y9_12expand = True
-y17_20expand = False
-floor_expansion = 1
-floor_initial = 5
-year_threshold = 2
 
 def expected_npv(floor_initial: float) -> np.array:
+    """_summary_
 
+    Args:
+        floor_initial (float): _description_
+
+    Returns:
+        np.array: _description_
+    """
     cashflow_stoc = np.zeros(config.time_lifespan+1,dtype='float64')
     npv_stoc = np.zeros(config.sims,dtype='float64')
     for instance in range(config.sims):
@@ -181,7 +159,14 @@ def expected_npv(floor_initial: float) -> np.array:
     return enpv_stoc, npv_stoc
 
 def expected_npv_opti(floor_initial: float) -> np.array:
+    """_summary_
 
+    Args:
+        floor_initial (float): _description_
+
+    Returns:
+        np.array: _description_
+    """
     cashflow_stoc = np.zeros(config.time_lifespan+1,dtype='float64')
     npv_stoc = np.zeros(config.sims,dtype='float64')
     for instance in range(config.sims):
@@ -189,32 +174,3 @@ def expected_npv_opti(floor_initial: float) -> np.array:
         npv_stoc[instance] = npv(config.rate_discount,cashflow_stoc)
 
     return -np.mean(npv_stoc)
-
-
-def expected_npv_flex_det(floor_initial: float) -> np.array:
-
-    cashflow_stoc = np.zeros(config.time_lifespan+1,dtype='float64')
-    npv_stoc = np.zeros(config.sims,dtype='float64')
-    for instance in range(config.sims):
-            cashflow_stoc = cashflow_array_flex_det(floor_initial)
-            npv_stoc[instance] = npv(config.rate_discount,cashflow_stoc)
-
-    enpv_stoc = np.mean(npv_stoc)
-    from millify import millify
-    print('ENPV £' + str(millify(enpv_stoc,precision=2)))
-
-    return enpv_stoc, npv_stoc
-
-def expected_npv_flex(floor_initial: float) -> np.array:
-
-    cashflow_stoc = np.zeros(config.time_lifespan+1,dtype='float64')
-    npv_stoc = np.zeros(config.sims,dtype='float64')
-    for instance in range(config.sims):
-            cashflow_stoc = cashflow_array_flex(floor_initial,seed_number=config.scenarios[instance])
-            npv_stoc[instance] = npv(config.rate_discount,cashflow_stoc)
-
-    enpv_stoc = np.mean(npv_stoc)
-    from millify import millify
-    print('ENPV £' + str(millify(enpv_stoc,precision=2)))
-
-    return enpv_stoc, npv_stoc

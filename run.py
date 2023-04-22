@@ -8,9 +8,10 @@
 import numpy as np
 import config
 import objective_funcs
+import objective_funcs_flex
 import plotting
 import matplotlib.pyplot as plt
-from scipy.optimize import minimize, minimize_scalar
+from scipy.optimize import minimize, minimize_scalar, brute, fmin
 
 
 ''' NPV function for initial design vector - rigid and flex'''
@@ -42,33 +43,52 @@ for instance in range(config.floor_min,config.floor_max):
     objective_funcs.expected_npv(instance)
 
 #flex
+
 print('____________________________')
-print('Flex Deterministic:')
+print('Flex Deterministic:') 
 print('____________________________')
-enpv_stoc_flex, npv_stoc_flex = objective_funcs.expected_npv_flex_det(config.floor_initial)
+enpv_det_flex, npv_det_flex = objective_funcs_flex.enpv_flex_det(config.floor_initial,config.y1_4expand,config.y9_12expand,config.y17_20expand,config.floor_expansion,config.year_threshold,config.capacity_threshold)
+
+#fun = lambda design_variables: objective_funcs_flex.enpv_flex_det_opti(design_variables[0],design_variables[1],design_variables[2],design_variables[3],design_variables[4],design_variables[5],design_variables[6])
+def fun(variables):
+    floor_initial,y1_4expand,y9_12expand,y17_20expand,floor_expansion,year_threshold,capacity_threshold = variables
+    return objective_funcs_flex.enpv_flex_det_opti(floor_initial,y1_4expand,y9_12expand,y17_20expand,floor_expansion,year_threshold,capacity_threshold)
+
+rrange = (slice(config.floor_min, config.floor_max,1),slice(0, 2,1),slice(0, 2,1),slice(0, 2,1),slice(1,4,1),slice(1,4,1),slice(0.9,1.3,0.1))
+flex_det_optimised = brute(fun, rrange, full_output=True, finish=fmin)
+print(np.around(flex_det_optimised[0],decimals=2),flex_det_optimised[1])
 
 
 print('____________________________')
 print('Flex Stochastic:')
 print('____________________________')
-enpv_stoc_flex, npv_stoc_flex = objective_funcs.expected_npv_flex(config.floor_initial)
 
-''' TODO: optimise the flex design vectors under deterministic and stochastic demand'''
-# at this point it proves that optimal values will not be the same under a stochastic demand
-''' TODO: optimise against ENPV to find optimal design variable'''
-# prove that flexibility can 
+enpv_stoc_flex, npv_stoc_flex = objective_funcs_flex.enpv_flex(config.floor_initial,config.y1_4expand,config.y9_12expand,config.y17_20expand,config.floor_expansion,config.year_threshold,config.capacity_threshold)
 
+
+design_variables = (config.floor_initial,config.y1_4expand,config.y9_12expand,config.y17_20expand,config.floor_expansion,config.year_threshold,config.capacity_threshold)
+bnds_arr = ((config.floor_min, config.floor_max), (0, 1),(0, 1),(0, 1),(1,3),(1,3),(0.5,1.2))
+fun2 = lambda design_variables: objective_funcs_flex.enpv_flex_opti(design_variables[0],design_variables[1],design_variables[2],design_variables[3],design_variables[4],design_variables[5],design_variables[6])
+flex_optimised = minimize(fun2, design_variables, method='Nelder-Mead', bounds=bnds_arr)
+print(flex_optimised)
+print(np.around(flex_optimised.x,decimals=2))
+
+#TODO: plot the graphs properly
 
 plot = False
 if plot:
     #plot first demands
     plt.style.use(style='fast')
     ax1 = plt.figure(plotting.demand_plotter(config.scenarios[1:8]))
+    
+    
     enpv_stoc, npv_stoc = objective_funcs.expected_npv(config.sims,config.scenarios)
     #rigid stochastic demand histogram
     ax2 = plt.figure(plotting.histogram_plotter(npv_stoc/1e6))
     #rigid stochastic demand cdf
     ax3 = plt.figure(plotting.cdf_plotter(npv_stoc/1e6,enpv_stoc/1e6))
+    
+    
     #flex stochastic demand histogram
     ax4 = plt.figure(plotting.histogram_plotter(npv_stoc_flex/1e6))
     #rigid stochastic demand cdf
