@@ -23,7 +23,7 @@ print('____________________________')
 #fun = lambda x: objective_funcs.npv_det_opti(x)
 #Optimise number of floors for rigid design under deterministic conditions
 bnds = (config.floor_min, config.floor_max)
-rigid_det_optimised = minimize_scalar(objective_funcs.npv_det_opti, method='Brent', bounds=bnds)
+rigid_det_optimised = minimize_scalar(objective_funcs.npv_det_opti, bounds=bnds)
 print(rigid_det_optimised)
 
 for instance in range(config.floor_min,config.floor_max):
@@ -36,7 +36,7 @@ print('Rigid Stochastic:')
 print('____________________________')
 
 #Rigid design 
-rigid_stoc_optimised = minimize_scalar(objective_funcs.expected_npv_opti, method='Brent', bounds=bnds)
+rigid_stoc_optimised = minimize_scalar(objective_funcs.expected_npv_opti, bounds=bnds)
 print(rigid_stoc_optimised)
 
 for instance in range(config.floor_min,config.floor_max):
@@ -57,25 +57,30 @@ def fun(variables):
 rrange = (slice(config.floor_min, config.floor_max,1),slice(0, 2,1),slice(0, 2,1),slice(0, 2,1),slice(1,4,1),slice(1,4,1),slice(0.9,1.3,0.1))
 flex_det_optimised = brute(fun, rrange, full_output=True, finish=fmin)
 print(np.around(flex_det_optimised[0],decimals=2),flex_det_optimised[1])
-
+from millify import millify
+print('Decision Rules = '+ str(np.rint(flex_det_optimised[0])) + ' | ENPV £' + str(millify(-flex_det_optimised[1],precision=2)))
+#print(objective_funcs_flex.enpv_flex_det_opti(5,1,0,0,1,1,1.0))
 
 print('____________________________')
 print('Flex Stochastic:')
 print('____________________________')
 
 enpv_stoc_flex, npv_stoc_flex = objective_funcs_flex.enpv_flex(config.floor_initial,config.y1_4expand,config.y9_12expand,config.y17_20expand,config.floor_expansion,config.year_threshold,config.capacity_threshold)
+#print(objective_funcs_flex.enpv_flex(3,1,1,0,1,2,1.0))
 
+#print(objective_funcs_flex.enpv_flex(5,0,1,0,1,1,1.0))
+#print(objective_funcs_flex.enpv_flex(5,1,1,1,1,2,1.0))
 
 design_variables = (config.floor_initial,config.y1_4expand,config.y9_12expand,config.y17_20expand,config.floor_expansion,config.year_threshold,config.capacity_threshold)
-bnds_arr = ((config.floor_min, config.floor_max), (0, 1),(0, 1),(0, 1),(1,3),(1,3),(0.5,1.2))
+bnds_arr = ((config.floor_min, config.floor_max), (0, 1),(0, 1),(0, 1),(1,3),(1,3),(0.8,1.0))
 fun2 = lambda design_variables: objective_funcs_flex.enpv_flex_opti(design_variables[0],design_variables[1],design_variables[2],design_variables[3],design_variables[4],design_variables[5],design_variables[6])
 flex_optimised = minimize(fun2, design_variables, method='Nelder-Mead', bounds=bnds_arr)
-print(flex_optimised)
-print(np.around(flex_optimised.x,decimals=2))
+print('Decision Rules = '+ str(np.rint(flex_optimised[0])) + ' | ENPV £' + str(millify(-flex_optimised[1],precision=2)))
+#print(np.around(flex_optimised.x,decimals=2))
 
 #TODO: plot the graphs properly
 
-plot = False
+plot = True
 if plot:
     #plot first demands
     plt.style.use(style='fast')

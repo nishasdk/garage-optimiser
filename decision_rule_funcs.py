@@ -7,6 +7,7 @@ N Saduagkan, Feb 2023
 
 import config
 import numpy as np
+import math
 
 
 def design_variable_check(y1_4expand:float, y9_12expand:float, y17_20expand:float, t:int) -> bool:
@@ -52,6 +53,32 @@ def check_expansion_criterion(capacity: np.array, demand: np.array, t: int, year
     total_capacity = np.sum(capacity[(t - round(year_threshold)):t]) #capacity in the last n years
     return total_demand >= capacity_threshold * total_capacity
 
+def check_expansion_criterion2(capacity: np.array, demand: np.array, t: int, year_threshold: int, capacity_threshold: float) -> bool:
+    """Check that the demand in the last n years has been met. Controlled by year_threshold (design variable)
+
+    Args:
+        capacity (np.array): array of capacity over lifespan
+        demand (np.array): array of demand over lifespan 
+        t (int): time where condition is being checked (year)
+
+    Returns:
+        bool: True = can expand if within x% of the capacity - change capacity_threshold. 
+    """
+    year_threshold = math.ceil(year_threshold)
+    #the year_threshold keeps rounding to 0 because optimisation module sets threshold to negative, quick fix
+    #if year_threshold <= 0:
+    #    year_threshold = 1
+    
+    total_demand = demand[(t - year_threshold):t] #demand in the last n years
+    total_capacity = capacity[(t - year_threshold):t] #demand in the last n years
+    
+    boolean = np.full((year_threshold,1),False)
+    
+    for i in range(len(boolean)):
+        boolean[i] = total_demand[i] >= capacity_threshold * total_capacity[i]
+    
+    return np.sum(boolean) == year_threshold
+
 def expansion_cost(floor_expansion: int, capacity: int) -> float:
     """calculates the cost of expanding (past 2 floors)
 
@@ -80,15 +107,15 @@ def capacity_update(capacity:np.array, cost_expansion: np.array, demand: np.arra
         np.array: outputs final capcity with expansion and the cost of expansion
     """
     
-    for t in range(1,config.time_lifespan): 
+    for t in range(math.ceil(year_threshold),config.time_lifespan): 
         #check that it hasn't reached max expansion
-        if check_capacity_limit(capacity[t-1], floor_expansion) and check_expansion_criterion(capacity,demand,t,year_threshold,capacity_threshold) and design_variable_check(y1_4expand, y9_12expand, y17_20expand,t) and t > year_threshold:
+        if check_capacity_limit(capacity[t-1], floor_expansion) and check_expansion_criterion2(capacity,demand,t,year_threshold,capacity_threshold) and design_variable_check(y1_4expand, y9_12expand, y17_20expand,t) and t > year_threshold:
             #check that in the past n year(s), demand has been sufficient as to trigger expansion
             capacity[t] = capacity[t-1] + floor_expansion * config.space_per_floor
             cost_expansion[t] = expansion_cost(floor_expansion,capacity[t])
             
             
-        elif check_expansion_criterion(capacity,demand,t,year_threshold,capacity_threshold) and not(check_capacity_limit(capacity[t-1], floor_expansion)) and design_variable_check(y1_4expand, y9_12expand, y17_20expand,t):
+        elif check_expansion_criterion2(capacity,demand,t,year_threshold,capacity_threshold) and not(check_capacity_limit(capacity[t-1], floor_expansion)) and design_variable_check(y1_4expand, y9_12expand, y17_20expand,t):
             #expand to max floors when floor_expansion is not a multiple of the max
             capacity[t] = config.floor_max * config.space_per_floor
             expansion_amount = (capacity[t] - capacity[t-1])/config.space_per_floor

@@ -10,14 +10,15 @@ import numpy as np
 
 '''______________select simulation variables__________________'''
 
-seed_no = 123 # means script always selects the same N scenarios. N is defined by sims
+seed_no = 69 # means script always selects the same N scenarios. N is defined by sims
 np.random.seed(seed_no)
 sims = 2000 # number of simulations
 
 '''___________________________________________________________'''
 
 ''' to find ENPV for a certain number of scenarios'''
-scenarios = np.random.choice(sims,size=sims,replace=False) 
+scenarios = np.random.choice(sims,size=sims,replace=False)
+#TODO turn this into training set for DRL - in sample vs outsample
 
 
 '''________________select design variables___________________'''
@@ -49,9 +50,9 @@ floor_min = 2  # Minimum number of floors built
 floor_max = 9 + 1  # Maximum number of floors built (+1 is for python to pick 9 floors inclusive upperbound)
 
 # Demand Variables
-demand_1 = 750  # Projected year 1 demand
-demand_10 = 750  # additional demand by year 10
-demand_final = 250  # additional demand after year 10
+demand_initial = 750  # Projected year 1 demand
+demand_10 = 750 # additional demand by year 10
+demand_20 = 250  # additional demand after year 10
 
 # Stochastic demand variables
 

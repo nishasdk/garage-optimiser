@@ -20,10 +20,10 @@ def demand_deterministic(time_arr: np.array) -> np.array:
         np.array: deterministic demand
     """
     # Parameter for demand model showing difference between initial and final demand values
-    alpha = config.demand_10 + config.demand_final
+    alpha = config.demand_10 + config.demand_20
     # Parameter for demand model showing growth speed of demand curve
-    beta = -np.log(config.demand_final / alpha) / (config.time_lifespan / 2 - 1)
-    demand = config.demand_1 + config.demand_10 + config.demand_final - alpha * np.exp(-beta * (time_arr - 1))
+    beta = -np.log(config.demand_20 / alpha) / (config.time_lifespan / 2 - 1)
+    demand = config.demand_initial + config.demand_10 + config.demand_20 - alpha * np.exp(-beta * (time_arr - 1))
     return demand
 
 
@@ -39,14 +39,11 @@ def demand_stochastic(time_arr: np.array, seed_number: int) -> np.array:
     """
     # set constant seed for simulations to for standardized comparison
     np.random.seed(seed_number) #demand scenario with this seed will always be the same
-    rD0 = round(
-        (1 - config.off_D0) * config.demand_1 +
-        np.random.rand() * 2 * config.off_D0 * config.demand_1)  # Realised demand in year 0
+    rD0 = round((1 - config.off_D0) * config.demand_initial +np.random.rand() * 2 * config.off_D0 * config.demand_initial)  # Realised demand in year 0
 
     rD10 = round((1 - config.off_D10) * config.demand_10 + np.random.rand() * 2 * config.off_D10 * config.demand_10)  # Realised additional demand by year 10
 
-    rDf = round(
-        (1 - config.off_Dfinal) * config.demand_final + np.random.rand() * 2 * config.off_Dfinal * config.demand_final)  # Realised additional demand after year 10
+    rDf = round((1 - config.off_Dfinal) * config.demand_20 + np.random.rand() * 2 * config.off_Dfinal * config.demand_20)  # Realised additional demand after year 10
 
     # Parameter for demand model showing difference between initial and final demand values
     alpha_stoc = rD10 + rDf
@@ -54,14 +51,16 @@ def demand_stochastic(time_arr: np.array, seed_number: int) -> np.array:
     # Parameter for demand model showing growth speed of demand curve
     beta_stoc = -np.log(rDf / alpha_stoc) / (config.time_lifespan / 2 - 1)
 
-    D_stoc1 = (rD0 + rD10 + rDf - alpha_stoc *np.exp(-beta_stoc * (time_arr - 1)))  # projected demand vector
+    D_stoc = np.zeros(config.time_lifespan+1)
+    D_stoc[1:config.time_lifespan+1] = (rD0 + rD10 + rDf - alpha_stoc *np.exp(-beta_stoc * (time_arr[1:config.time_lifespan+1] - 1)))  # projected demand vector
 
-    # projected demand vector shifted by one period to right
-    D_stoc2 = rD0 + rD10 + rDf - alpha_stoc * np.exp(-beta_stoc * (time_arr - 2))
-    D_g_proj = D_stoc1 / D_stoc2 - 1
-    R_g = D_g_proj - config.volatility + np.random.rand(len(time_arr)) * 2 * config.volatility
+    for i in np.arange(2,config.time_lifespan+1):
+        # projected demand vector shifted by one period to right
+        D_g_proj = D_stoc[i] / D_stoc[i-1] - 1
+        R_g = D_g_proj - config.volatility + np.random.rand() * 2 * config.volatility
+        D_stoc[i] = D_stoc[i-1] * (1 + R_g)
 
-    return np.multiply(D_stoc2, (1 + R_g))
+    return D_stoc
 
 
 def cost_construction_initial(floor_initial: float) -> float:
@@ -109,13 +108,13 @@ def cashflow_array_rigid(floor_initial: float, demand_det: bool, seed_number = N
 
 
 def npv_det(floor_initial: float):
-    """_summary_
+    """ function for printing NPV in main script
 
     Args:
-        floor_initial (float): _description_
+        floor_initial (float): initial number of floors
 
     Returns:
-        _type_: _description_
+        npv_det (float): the deterministic NPV
     """
     npv_garage = npv(config.rate_discount,cashflow_array_rigid(floor_initial,demand_det = True))
     
@@ -125,26 +124,26 @@ def npv_det(floor_initial: float):
     return npv_det
 
 def npv_det_opti(floor_initial: float):
-    """_summary_
+    """Function used for the scipy_optimize module
 
     Args:
-        floor_initial (float): _description_
+        floor_initial (float): initial number of floors
 
     Returns:
-        _type_: _description_
+        npv (float): the NPV, negative due to nature of optimizing for minimum
     """
     return -npv(config.rate_discount,cashflow_array_rigid(floor_initial,demand_det = True))
 
 
 
 def expected_npv(floor_initial: float) -> np.array:
-    """_summary_
+    """ function for printing ENPV in main script
 
     Args:
-        floor_initial (float): _description_
+        floor_initial (float): initial number of floors
 
     Returns:
-        np.array: _description_
+        npv_det (float): the ENPV for n stochastic demand conditions
     """
     cashflow_stoc = np.zeros(config.time_lifespan+1,dtype='float64')
     npv_stoc = np.zeros(config.sims,dtype='float64')
@@ -159,13 +158,13 @@ def expected_npv(floor_initial: float) -> np.array:
     return enpv_stoc, npv_stoc
 
 def expected_npv_opti(floor_initial: float) -> np.array:
-    """_summary_
+    """ function for scipy optimize module
 
     Args:
-        floor_initial (float): _description_
+        floor_initial (float): initial number of floors
 
     Returns:
-        np.array: _description_
+        npv_det (float): the ENPV, negative for minimize optimization
     """
     cashflow_stoc = np.zeros(config.time_lifespan+1,dtype='float64')
     npv_stoc = np.zeros(config.sims,dtype='float64')
