@@ -1,5 +1,6 @@
 # garage-optimiser
 
+part of econ & finance course / strategic engineering lab
 
 run pip install -r requirements.txt
 
