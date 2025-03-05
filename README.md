@@ -2,11 +2,12 @@
 
 part of econ & finance course @ imperial college dyson school of design engineering
 
-'''
-run pip install -r requirements.txt
+
+for prerequisites, run:
+pip install -r requirements.txt
 
 set seed number in config.py
-'''
+
 
 TODO:
 reinforcement learning implementation (A2C/Stable Baselines)
