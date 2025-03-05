@@ -28,7 +28,7 @@ def demand_deterministic(time_arr: np.array) -> np.array:
 
 
 def demand_stochastic(time_arr: np.array, seed_number: int) -> np.array:
-    """function for calculating the stochastic demand (lifted straight from @cesa_, variable explanations commented)
+    """function for calculating the stochastic demand (edited from @cesa_, change explanations commented)
 
     Args:
         time_arr (np.array): array starting at 0, ending at time_lifespan
@@ -39,11 +39,12 @@ def demand_stochastic(time_arr: np.array, seed_number: int) -> np.array:
     """
     # set constant seed for simulations to for standardized comparison
     np.random.seed(seed_number) #demand scenario with this seed will always be the same
+    
     rD0 = round((1 - config.off_D0) * config.demand_initial +np.random.rand() * 2 * config.off_D0 * config.demand_initial)  # Realised demand in year 0
 
-    rD10 = round((1 - config.off_D10) * config.demand_10 + np.random.rand() * 2 * config.off_D10 * config.demand_10)  # Realised additional demand by year 10
+    rD10 = round((1 - config.off_D10) * config.demand_10 + np.random.rand() * 2 * config.off_D10 * config.demand_10)  # Realised additional demand years 0-10
 
-    rDf = round((1 - config.off_Dfinal) * config.demand_20 + np.random.rand() * 2 * config.off_Dfinal * config.demand_20)  # Realised additional demand after year 10
+    rDf = round((1 - config.off_Dfinal) * config.demand_20 + np.random.rand() * 2 * config.off_Dfinal * config.demand_20)  # Realised additional demand years 10-20
 
     # Parameter for demand model showing difference between initial and final demand values
     alpha_stoc = rD10 + rDf
@@ -51,7 +52,8 @@ def demand_stochastic(time_arr: np.array, seed_number: int) -> np.array:
     # Parameter for demand model showing growth speed of demand curve
     beta_stoc = -np.log(rDf / alpha_stoc) / (config.time_lifespan / 2 - 1)
 
-    D_stoc = np.zeros(config.time_lifespan+1)
+    D_stoc = np.zeros(config.time_lifespan+1) #initialise
+    
     D_stoc[1:config.time_lifespan+1] = (rD0 + rD10 + rDf - alpha_stoc *np.exp(-beta_stoc * (time_arr[1:config.time_lifespan+1] - 1)))  # projected demand vector
 
     for i in np.arange(2,config.time_lifespan+1):

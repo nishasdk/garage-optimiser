@@ -26,7 +26,7 @@ def cashflow_array_flex_det(floor_initial: float,y1_4expand:bool, y9_12expand:bo
         capacity_threshold (float): constant multiplied to demand, determines capacity to expand (see above)
 
     Returns:
-        np.array: cashflow array
+        np.array: cashflow arrayx
     """
     # initialise the cashflow array
     cashflow = np.full((config.time_lifespan+1), -(objective_funcs.cost_construction_initial(floor_initial) + config.cost_land), dtype='float64')
@@ -42,7 +42,7 @@ def cashflow_array_flex_det(floor_initial: float,y1_4expand:bool, y9_12expand:bo
     for t in range(1, config.time_lifespan):
         cashflow[t] = min(capacity[t], demand[t])*config.price - capacity[t]*config.cost_ops - config.cost_land - cost_expansion[t]
     cashflow[-1] = min(capacity[-1], demand[-1])*config.price - capacity[-1]*config.cost_ops
-    return cashflow
+    return cashflow, capacity
 
 
 def enpv_flex_det(floor_initial: float, y1_4expand:bool, y9_12expand:bool, y17_20expand:bool,floor_expansion: int, year_threshold: int, capacity_threshold: float) -> np.array:
@@ -60,19 +60,19 @@ def enpv_flex_det(floor_initial: float, y1_4expand:bool, y9_12expand:bool, y17_2
     Returns:
         np.array: a scalar ENPV and an array of the NPVs, values used for plotting
     """
-    cashflow_det = cashflow_array_flex_det(floor_initial,y1_4expand,y9_12expand,y17_20expand,floor_expansion,year_threshold,capacity_threshold)
+    cashflow_det, capacity = cashflow_array_flex_det(floor_initial,y1_4expand,y9_12expand,y17_20expand,floor_expansion,year_threshold,capacity_threshold)
     npv_det= npv(config.rate_discount,cashflow_det)
 
     enpv_det = np.mean(npv_det)
     from millify import millify
     print('ENPV £' + str(millify(enpv_det,precision=2)))
 
-    return enpv_det , npv_det
+    return enpv_det , npv_det, capacity
 
 def enpv_flex_det_opti(floor_initial: float, y1_4expand:bool, y9_12expand:bool, y17_20expand:bool,floor_expansion: int, year_threshold: int, capacity_threshold: float) -> np.array:
     """ same as enpv_flex_det, created to be compatible with scipy.optimize module
     """
-    cashflow_det = cashflow_array_flex_det(floor_initial,y1_4expand,y9_12expand,y17_20expand,floor_expansion,year_threshold,capacity_threshold)
+    cashflow_det, capacity = cashflow_array_flex_det(floor_initial,y1_4expand,y9_12expand,y17_20expand,floor_expansion,year_threshold,capacity_threshold)
     npv_det= npv(config.rate_discount,cashflow_det)
     
     return -np.mean(npv_det)
@@ -107,7 +107,7 @@ def cashflow_array_flex(floor_initial: float,y1_4expand:bool, y9_12expand:bool, 
     for t in range(1, config.time_lifespan):
         cashflow[t] = min(capacity[t], demand[t])*config.price - capacity[t]*config.cost_ops - config.cost_land - cost_expansion[t]
     cashflow[-1] = min(capacity[-1], demand[-1])*config.price - capacity[-1]*config.cost_ops
-    return cashflow
+    return cashflow, capacity
 
 def enpv_flex(floor_initial: float, y1_4expand:bool, y9_12expand:bool, y17_20expand:bool,floor_expansion: int, year_threshold: int, capacity_threshold: float) -> np.array:
     """calculates expected NPV for flexible stochastic case
@@ -131,14 +131,14 @@ def enpv_flex(floor_initial: float, y1_4expand:bool, y9_12expand:bool, y17_20exp
     
     
     for instance in range(config.sims):
-            cashflow_stoc = cashflow_array_flex(floor_initial,y1_4expand,y9_12expand,y17_20expand,floor_expansion,year_threshold,capacity_threshold,seed_number=config.scenarios[instance])
+            cashflow_stoc, capacity_array = cashflow_array_flex(floor_initial,y1_4expand,y9_12expand,y17_20expand,floor_expansion,year_threshold,capacity_threshold,seed_number=config.scenarios[instance])
             npv_stoc[instance] = npv(config.rate_discount,cashflow_stoc)
 
     enpv_stoc = np.mean(npv_stoc)
     from millify import millify
     print('ENPV £' + str(millify(enpv_stoc,precision=2)))
 
-    return enpv_stoc, npv_stoc
+    return enpv_stoc, npv_stoc, capacity_array
 
 def enpv_flex_opti(floor_initial: float, y1_4expand:bool, y9_12expand:bool, y17_20expand:bool,floor_expansion: int, year_threshold: int, capacity_threshold: float) -> np.array:
     """same as enpv_flex, made compatible to scipy.optimize module
@@ -146,7 +146,7 @@ def enpv_flex_opti(floor_initial: float, y1_4expand:bool, y9_12expand:bool, y17_
     cashflow_stoc = np.zeros(config.time_lifespan+1,dtype='float64')
     npv_stoc = np.zeros(config.sims,dtype='float64')
     for instance in range(config.sims):
-            cashflow_stoc = cashflow_array_flex(floor_initial,y1_4expand,y9_12expand,y17_20expand,floor_expansion,year_threshold,capacity_threshold,seed_number=config.scenarios[instance])
+            cashflow_stoc, capacity = cashflow_array_flex(floor_initial,y1_4expand,y9_12expand,y17_20expand,floor_expansion,year_threshold,capacity_threshold,seed_number=config.scenarios[instance])
             npv_stoc[instance] = npv(config.rate_discount,cashflow_stoc)
 
     return -np.mean(npv_stoc)

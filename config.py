@@ -10,7 +10,7 @@ import numpy as np
 
 '''______________select simulation variables__________________'''
 
-seed_no = 69 # means script always selects the same N scenarios. N is defined by sims
+seed_no = 10 # means script always selects the same N scenarios. N is defined by sims
 np.random.seed(seed_no)
 sims = 2000 # number of simulations
 
@@ -27,7 +27,7 @@ y1_4expand = 0
 y9_12expand = 1
 y17_20expand = 0
 floor_expansion = 1
-year_threshold = 1
+year_threshold = 2
 capacity_threshold = 0.8
 '''___________________________________________________________'''
 

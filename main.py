@@ -12,10 +12,11 @@ import objective_funcs_flex
 import plotting
 import matplotlib.pyplot as plt
 from scipy.optimize import minimize, minimize_scalar, brute, fmin
+from millify import millify
 
 
-''' NPV function for initial design vector - rigid and flex'''
-''' TODO: change functions to to take variables for optimisation'''
+#NPV function for initial design vector - rigid and flex
+#TODO: change functions to to take variables for optimisation
 
 print('____________________________')
 print('Rigid Deterministic:')
@@ -47,9 +48,8 @@ for instance in range(config.floor_min,config.floor_max):
 print('____________________________')
 print('Flex Deterministic:') 
 print('____________________________')
-enpv_det_flex, npv_det_flex = objective_funcs_flex.enpv_flex_det(config.floor_initial,config.y1_4expand,config.y9_12expand,config.y17_20expand,config.floor_expansion,config.year_threshold,config.capacity_threshold)
+enpv_det_flex, npv_det_flex, capacity = objective_funcs_flex.enpv_flex_det(config.floor_initial,config.y1_4expand,config.y9_12expand,config.y17_20expand,config.floor_expansion,config.year_threshold,config.capacity_threshold)
 
-#fun = lambda design_variables: objective_funcs_flex.enpv_flex_det_opti(design_variables[0],design_variables[1],design_variables[2],design_variables[3],design_variables[4],design_variables[5],design_variables[6])
 def fun(variables):
     floor_initial,y1_4expand,y9_12expand,y17_20expand,floor_expansion,year_threshold,capacity_threshold = variables
     return objective_funcs_flex.enpv_flex_det_opti(floor_initial,y1_4expand,y9_12expand,y17_20expand,floor_expansion,year_threshold,capacity_threshold)
@@ -59,28 +59,27 @@ flex_det_optimised = brute(fun, rrange, full_output=True, finish=fmin)
 print(np.around(flex_det_optimised[0],decimals=2),flex_det_optimised[1])
 from millify import millify
 print('Decision Rules = '+ str(np.rint(flex_det_optimised[0])) + ' | ENPV £' + str(millify(-flex_det_optimised[1],precision=2)))
-#print(objective_funcs_flex.enpv_flex_det_opti(5,1,0,0,1,1,1.0))
+print(objective_funcs_flex.enpv_flex_det(4,1,0,0,1,1,1.0))
 
 print('____________________________')
 print('Flex Stochastic:')
 print('____________________________')
 
-enpv_stoc_flex, npv_stoc_flex = objective_funcs_flex.enpv_flex(config.floor_initial,config.y1_4expand,config.y9_12expand,config.y17_20expand,config.floor_expansion,config.year_threshold,config.capacity_threshold)
-#print(objective_funcs_flex.enpv_flex(3,1,1,0,1,2,1.0))
-
-#print(objective_funcs_flex.enpv_flex(5,0,1,0,1,1,1.0))
-#print(objective_funcs_flex.enpv_flex(5,1,1,1,1,2,1.0))
+print(objective_funcs_flex.enpv_flex(3,1,1,0,1,2,1.0))
+print(objective_funcs_flex.enpv_flex(5,0,1,0,1,1,1.0))
+print(objective_funcs_flex.enpv_flex(5,1,1,1,1,2,1.0))
 
 design_variables = (config.floor_initial,config.y1_4expand,config.y9_12expand,config.y17_20expand,config.floor_expansion,config.year_threshold,config.capacity_threshold)
 bnds_arr = ((config.floor_min, config.floor_max), (0, 1),(0, 1),(0, 1),(1,3),(1,3),(0.8,1.0))
 fun2 = lambda design_variables: objective_funcs_flex.enpv_flex_opti(design_variables[0],design_variables[1],design_variables[2],design_variables[3],design_variables[4],design_variables[5],design_variables[6])
 flex_optimised = minimize(fun2, design_variables, method='Nelder-Mead', bounds=bnds_arr)
-print('Decision Rules = '+ str(np.rint(flex_optimised[0])) + ' | ENPV £' + str(millify(-flex_optimised[1],precision=2)))
-#print(np.around(flex_optimised.x,decimals=2))
+print(flex_optimised)
+#print('Decision Rules = '+ str(np.rint(flex_optimised[0])) + ' | ENPV £' + str(millify(-flex_optimised[1],precision=2)))
+
 
 #TODO: plot the graphs properly
 
-plot = True
+plot = False
 if plot:
     #plot first demands
     plt.style.use(style='fast')
@@ -98,7 +97,7 @@ if plot:
     ax4 = plt.figure(plotting.histogram_plotter(npv_stoc_flex/1e6))
     #rigid stochastic demand cdf
     ax5 = plt.figure(plotting.cdf_plotter(npv_stoc_flex/1e6,enpv_stoc_flex/1e6))
-    '''TODO add args into plotting.cdf that includes legend titles/plot titles etc.'''
+    #TODO add args into plotting.cdf that includes legend titles/plot titles etc.
     plt.show()
 
-''' TODO: iterative history? sensitivity analysis? multiobjective? '''
+#TODO: iterative history? sensitivity analysis? multiobjective?

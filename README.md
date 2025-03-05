@@ -1,6 +1,6 @@
 # garage-optimiser
 
-part of econ & finance course @ imperial college dyson school of design engineerin
+part of econ & finance course @ imperial college dyson school of design engineering
 
 '''
 run pip install -r requirements.txt
