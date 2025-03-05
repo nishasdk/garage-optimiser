@@ -6,7 +6,9 @@ part of econ & finance course @ imperial college dyson school of design engineer
 for prerequisites, run:
 pip install -r requirements.txt
 
-set seed number in config.py
+set variables/ seed number in config.py
+
+optimiser runs in main.py
 
 
 TODO:
